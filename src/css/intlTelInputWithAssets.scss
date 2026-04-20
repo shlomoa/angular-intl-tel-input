@@ -1,0 +1,7 @@
+@use 'intlTelInput.scss';
+
+:root {
+  //* Image related variables.
+  --iti-path-flags-1x: url('../generated/flags.webp');
+  --iti-path-flags-2x: url('../generated/flags@2x.webp');
+}
