@@ -5,7 +5,7 @@ project(angular-intl-tel-input NONE)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(GENERATED_DIR ${SRC_DIR}/generated)
 set(SCRIPTS_DIR ${CMAKE_SOURCE_DIR}/scripts)
-set(REPO_ROOT ${CMAKE_SOURCE_DIR})
+set(REPO_ROOT ${CMAKE_SOURCE_DIR}/../..)
 
 # --- Install ---
 add_custom_command(
@@ -85,4 +85,16 @@ add_custom_target(clean_all
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/out-tsc
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMENT "Cleaning generated files and local build artifacts"
+)
+
+# --- Dist clean (restore to git checkout state) ---
+add_custom_target(dist_clean
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/dist
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${GENERATED_DIR}
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/.angular
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/out-tsc
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/node_modules
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_BINARY_DIR}
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Restoring package to git checkout state"
 )
