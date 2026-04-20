@@ -5,7 +5,7 @@ project(angular-intl-tel-input NONE)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(GENERATED_DIR ${SRC_DIR}/generated)
 set(SCRIPTS_DIR ${CMAKE_SOURCE_DIR}/scripts)
-set(REPO_ROOT ${CMAKE_SOURCE_DIR}/../..)
+set(REPO_ROOT ${CMAKE_SOURCE_DIR})
 
 # --- Install ---
 add_custom_command(
