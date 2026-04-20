@@ -81,6 +81,8 @@ add_custom_target(build ALL DEPENDS ${BUILD_MARKER})
 add_custom_target(clean_all
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/dist
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${GENERATED_DIR}
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/.angular
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/out-tsc
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  COMMENT "Cleaning generated files and dist"
+  COMMENT "Cleaning generated files and local build artifacts"
 )
