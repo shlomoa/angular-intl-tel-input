@@ -5,7 +5,7 @@ project(angular-intl-tel-input NONE)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(GENERATED_DIR ${SRC_DIR}/generated)
 set(SCRIPTS_DIR ${CMAKE_SOURCE_DIR}/scripts)
-set(REPO_ROOT ${CMAKE_SOURCE_DIR}/../..)
+set(REPO_ROOT ${CMAKE_SOURCE_DIR})
 
 # --- Install ---
 add_custom_command(
@@ -21,8 +21,8 @@ add_custom_target(install_deps DEPENDS ${CMAKE_SOURCE_DIR}/node_modules/.pnpm/lo
 set(LIBPHONENUMBER_MARKER ${REPO_ROOT}/third_party/libphonenumber/javascript/i18n/phonenumbers/phonenumberutil.js)
 add_custom_command(
   OUTPUT ${LIBPHONENUMBER_MARKER}
-  COMMAND git submodule update --init --recursive
-  WORKING_DIRECTORY ${REPO_ROOT}
+  COMMAND git -C ${REPO_ROOT} submodule update --init --recursive
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMENT "Initializing libphonenumber submodule"
 )
 add_custom_target(submodules DEPENDS ${LIBPHONENUMBER_MARKER})
