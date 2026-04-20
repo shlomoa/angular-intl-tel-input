@@ -5,9 +5,7 @@ project(angular-intl-tel-input NONE)
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(GENERATED_DIR ${SRC_DIR}/generated)
 set(SCRIPTS_DIR ${CMAKE_SOURCE_DIR}/scripts)
-set(REPO_ROOT ${CMAKE_SOURCE_DIR})
-set(LIBPHONENUMBER_DIR ${REPO_ROOT}/third_party/libphonenumber)
-set(LIBPHONENUMBER_MARKER ${LIBPHONENUMBER_DIR}/javascript/i18n/phonenumbers/phonenumberutil.js)
+set(REPO_ROOT ${CMAKE_SOURCE_DIR}/../..)
 
 # --- Install ---
 add_custom_command(
@@ -19,6 +17,8 @@ add_custom_command(
 )
 add_custom_target(install_deps DEPENDS ${CMAKE_SOURCE_DIR}/node_modules/.pnpm/lock.yaml)
 
+# --- Git submodule (libphonenumber) ---
+set(LIBPHONENUMBER_MARKER ${REPO_ROOT}/third_party/libphonenumber/javascript/i18n/phonenumbers/phonenumberutil.js)
 # --- Ensure libphonenumber sources ---
 add_custom_command(
   OUTPUT ${LIBPHONENUMBER_MARKER}
@@ -34,6 +34,7 @@ add_custom_target(submodules DEPENDS ${LIBPHONENUMBER_MARKER})
 # --- Generate sprites (_metadata.scss + flag images) ---
 set(METADATA_SCSS ${GENERATED_DIR}/_metadata.scss)
 set(FLAGS_WEBP ${GENERATED_DIR}/flags.webp)
+file(GLOB DATA_SOURCES ${SRC_DIR}/intl-tel-input/data.ts)
 
 add_custom_command(
   OUTPUT ${METADATA_SCSS} ${FLAGS_WEBP}
@@ -69,13 +70,18 @@ set(BUILD_MARKER ${CMAKE_SOURCE_DIR}/dist/.build-stamp)
 add_custom_command(
   OUTPUT ${BUILD_MARKER}
   COMMAND pnpm ng build
+  COMMAND node ${SCRIPTS_DIR}/postbuild-package.cjs
   COMMAND ${CMAKE_COMMAND} -E touch ${BUILD_MARKER}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   DEPENDS
     ${METADATA_SCSS}
     ${FLAGS_WEBP}
     ${VALIDATION_TS}
+    ${SRC_DIR}/css/intlTelInput.scss
+    ${SRC_DIR}/css/intlTelInputWithAssets.scss
+    ${SRC_DIR}/css/styles.d.ts
     ${CMAKE_SOURCE_DIR}/node_modules/.pnpm/lock.yaml
+    ${SCRIPTS_DIR}/postbuild-package.cjs
   COMMENT "Building Angular library"
 )
 add_custom_target(build ALL DEPENDS ${BUILD_MARKER})
