@@ -138,6 +138,18 @@ writeFile(
               },
               defaultConfiguration: 'production',
             },
+            serve: {
+              builder: '@angular/build:dev-server',
+              configurations: {
+                production: {
+                  buildTarget: 'integration-app:build:production',
+                },
+                development: {
+                  buildTarget: 'integration-app:build:development',
+                },
+              },
+              defaultConfiguration: 'development',
+            },
           },
         },
       },
