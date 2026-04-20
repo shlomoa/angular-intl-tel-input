@@ -52,6 +52,12 @@ Generated files are written to `src/generated/` and excluded from version contro
 
 The distributable Angular package is output to `dist/`.
 
+## Unit tests
+
+```sh
+pnpm test
+```
+
 ## Validation stages
 
 ### 2.1 Install validation
@@ -109,12 +115,25 @@ This script:
 - installs `angular-intl-tel-input` from the local `dist/`
 - builds the consumer app with `import { IntlTelInput } from 'angular-intl-tel-input'`
 
+On success the temp app directory is printed. To serve it interactively:
+
+```sh
+cd <printed temp path>
+pnpm ng serve
+```
+
 ## Consumer usage
 
 Import the component as a named export:
 
 ```ts
 import { IntlTelInput } from 'angular-intl-tel-input';
+```
+
+Import the package stylesheet as well:
+
+```css
+@import "angular-intl-tel-input/styles";
 ```
 
 `IntlTelInputWithValidation` is also exported as a named export.

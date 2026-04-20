@@ -73,6 +73,7 @@ writeFile(
       scripts: {
         ng: 'ng',
         build: 'ng build',
+        start: 'ng serve',
       },
       dependencies: {
         '@angular/common': rootPackageJson.devDependencies['@angular/common'],
@@ -228,7 +229,10 @@ writeFile(
   '<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="utf-8">\n    <title>Integration App</title>\n    <base href="/">\n    <meta name="viewport" content="width=device-width, initial-scale=1">\n  </head>\n  <body>\n    <app-root></app-root>\n  </body>\n</html>\n',
 );
 
-writeFile('src/styles.css', ':root { color-scheme: light; }\nbody { font-family: sans-serif; margin: 24px; }\n');
+writeFile(
+  'src/styles.css',
+  '@import "angular-intl-tel-input/styles";\n\n:root { color-scheme: light; }\nbody { font-family: sans-serif; margin: 24px; }\n\nintl-tel-input { width: 320px; display: inline-block; }\n',
+);
 
 const run = (command, args) => {
   console.log(`\n> ${command} ${args.join(' ')}`);
