@@ -15,7 +15,7 @@ const Compiler = require('google-closure-compiler/lib/node/index.js').default;
 const { getNativeImagePath } = require('google-closure-compiler/lib/utils.js');
 
 // libphonenumber lives at the monorepo root as a git submodule
-const repoRoot = path.resolve(rootDir, '..', '..');
+const repoRoot = path.resolve(rootDir);
 const libphonenumberBase = path.join(repoRoot, 'third_party', 'libphonenumber');
 const requiredLibphonenumberFile =
   path.join(libphonenumberBase, 'javascript', 'i18n', 'phonenumbers', 'phonenumberutil.js');
