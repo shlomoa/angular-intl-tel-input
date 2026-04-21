@@ -15,7 +15,7 @@ Every step is verbose by default and prints:
 - `Step "<name>": Starting`
 - `Step "<name>": Created|Updated|Failed: <details>`
 
-Every external command is wrapped with a timeout of up to 10 seconds. Timed-out commands are terminated. Use `--timeout` to lower the limit if needed.
+Every external command is wrapped with a timeout of up to 10 seconds to match the issue requirement. Timed-out commands are terminated. Use `--timeout` to lower the limit if needed.
 
 ## Usage
 

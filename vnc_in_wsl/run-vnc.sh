@@ -50,7 +50,7 @@ Options:
   --password VALUE            Set the VNC password from the provided value
   --skip-upgrade              Skip apt-get upgrade
   --skip-password             Do not set a VNC password
-  --timeout SECONDS           Per-command timeout, 1-10 seconds; timed-out commands are terminated (default: 10)
+  --timeout SECONDS           Per-command timeout, 1-10 seconds to match the issue requirement; timed-out commands are terminated (default: 10)
   --wsl-conf-path PATH        Override /etc/wsl.conf path
   --vnc-dir PATH              Override the user's .vnc directory
   --service-dir PATH          Override the user systemd directory
@@ -116,9 +116,9 @@ run_target_bash() {
   shift 3
 
   if [[ "$(id -u)" -eq 0 && "$TARGET_USER" != "$(id -un)" ]]; then
-    run_command "$step_name" "$success_message" sudo -u "$TARGET_USER" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -lc "$script" -- "$@"
+    run_command "$step_name" "$success_message" sudo -u "$TARGET_USER" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -c "$script" -- "$@"
   else
-    run_command "$step_name" "$success_message" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -lc "$script" -- "$@"
+    run_command "$step_name" "$success_message" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -c "$script" -- "$@"
   fi
 }
 
@@ -193,11 +193,9 @@ write_file_if_changed() {
   step_result "$step_name" "Updated" "$path"
 }
 
-render_wsl_conf_to_file() {
-  local temp_file="$1"
-
-  if (( DRY_RUN )); then
-    python3 - "$WSL_CONF_PATH" "$temp_file" <<'PY'
+build_wsl_conf_renderer() {
+  local renderer_path="$1"
+  cat >"$renderer_path" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -240,56 +238,29 @@ if not found_boot:
 
 target_path.write_text("".join(output))
 PY
+}
+
+render_wsl_conf_to_file() {
+  local temp_file="$1"
+  local renderer_path
+  renderer_path="$(mktemp)"
+  trap 'rm -f "$renderer_path"' RETURN
+  build_wsl_conf_renderer "$renderer_path"
+
+  if (( DRY_RUN )); then
+    python3 "$renderer_path" "$WSL_CONF_PATH" "$temp_file"
+    trap - RETURN
+    rm -f "$renderer_path"
     return 0
   fi
 
   local rc=0
   set +e
-  "$TIMEOUT_BIN" --foreground --kill-after=2s "${COMMAND_TIMEOUT}s" python3 - "$WSL_CONF_PATH" "$temp_file" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-source_path = Path(sys.argv[1])
-target_path = Path(sys.argv[2])
-text = source_path.read_text() if source_path.exists() else ""
-lines = text.splitlines(True)
-output = []
-in_boot = False
-found_boot = False
-found_systemd = False
-
-for line in lines:
-    stripped = line.strip()
-    if stripped.startswith("[") and stripped.endswith("]"):
-        if in_boot and not found_systemd:
-            output.append("systemd=true\n")
-            found_systemd = True
-        in_boot = stripped.lower() == "[boot]"
-        found_boot = found_boot or in_boot
-        output.append(line)
-        continue
-
-    if in_boot and re.match(r"\s*systemd\s*=", line, re.IGNORECASE):
-        output.append("systemd=true\n")
-        found_systemd = True
-        continue
-
-    output.append(line)
-
-if in_boot and not found_systemd:
-    output.append("systemd=true\n")
-    found_systemd = True
-
-if not found_boot:
-    if output and output[-1].strip():
-        output.append("\n")
-    output.extend(["[boot]\n", "systemd=true\n"])
-
-target_path.write_text("".join(output))
-PY
+  "$TIMEOUT_BIN" --foreground --kill-after=2s "${COMMAND_TIMEOUT}s" python3 "$renderer_path" "$WSL_CONF_PATH" "$temp_file"
   rc=$?
   set -e
+  trap - RETURN
+  rm -f "$renderer_path"
 
   if (( rc == 124 )); then
     fail "Configure /etc/wsl.conf" "timed out after ${COMMAND_TIMEOUT}s while preparing updated content"
