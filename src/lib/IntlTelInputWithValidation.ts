@@ -3,13 +3,11 @@ import validation from "../generated/validation.generated";
 import IntlTelInput from "./IntlTelInput";
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
   forwardRef,
+  input,
+  output,
 } from "@angular/core";
 import {
-  NG_VALUE_ACCESSOR,
   NG_VALIDATORS,
   Validator,
   AbstractControl,
@@ -38,11 +36,6 @@ export { intlTelInput };
   `,
   providers: [
     {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IntlTelInputWithValidation),
-      multi: true,
-    },
-    {
       provide: NG_VALIDATORS,
       useExisting: forwardRef(() => IntlTelInputWithValidation),
       multi: true,
@@ -50,9 +43,9 @@ export { intlTelInput };
   ],
 })
 class IntlTelInputWithValidation extends IntlTelInput implements Validator {
-  @Input() usePreciseValidation: boolean = false;
-  @Output() validityChange = new EventEmitter<boolean>();
-  @Output() errorCodeChange = new EventEmitter<number | null>();
+  readonly usePreciseValidation = input(false);
+  readonly validityChange = output<boolean>();
+  readonly errorCodeChange = output<number | null>();
 
   private lastEmittedValidity?: boolean;
   private lastEmittedErrorCode?: number | null;
@@ -68,7 +61,7 @@ class IntlTelInputWithValidation extends IntlTelInput implements Validator {
     }
 
     const isValid =
-      (this.usePreciseValidation
+      (this.usePreciseValidation()
         ? iti.isValidNumberPrecise()
         : iti.isValidNumber()) ?? false;
 
@@ -98,7 +91,7 @@ class IntlTelInputWithValidation extends IntlTelInput implements Validator {
       return null;
     }
 
-    const isValid = this.usePreciseValidation
+    const isValid = this.usePreciseValidation()
       ? iti.isValidNumberPrecise()
       : iti.isValidNumber();
 
