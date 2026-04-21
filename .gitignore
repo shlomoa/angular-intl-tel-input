@@ -23,4 +23,5 @@ tests/integration/**/__screenshots__/
 /.vitest-attachments/
 src/generated/
 build/
+third_party/
 .angular/

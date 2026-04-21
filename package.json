@@ -1,13 +1,12 @@
 {
-  "name": "angular-intl-tel-input",
-  "version": "27.0.10",
+  "name": "@shlomoa/angular-intl-tel-input",
+  "version": "1.0.0",
   "description": "Standalone Angular component from intl-tel-input",
   "license": "MIT",
   "author": "Originally: Jack O'Connor (http://jackocnr.com)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shlomoa/angular-intl-tel-input.git",
-    "directory": "packages/angular"
+    "url": "git+https://github.com/shlomoa/angular-intl-tel-input.git"
   },
   "bugs": {
     "url": "https://github.com/shlomoa/angular-intl-tel-input/issues"
@@ -33,9 +32,6 @@
     "test:integration": "node scripts/validate-integration.cjs"
   },
   "packageManager": "pnpm@10.33.0",
-  "dependencies": {
-    "tslib": "^2.3.0"
-  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp",
@@ -44,6 +40,9 @@
       "lmdb",
       "msgpackr-extract"
     ]
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@angular/build": "^21.2.7",
