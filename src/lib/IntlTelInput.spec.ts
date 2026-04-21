@@ -151,14 +151,14 @@ describe("IntlTelInput", () => {
     });
 
     it("should mark the bound SignalFormControl as touched on blur", async () => {
-      expect(host.control.touched()).toBe(false);
+      expect(host.control.touched).toBe(false);
 
       const input = host.iti.getInput();
       input.dispatchEvent(new FocusEvent("blur"));
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(host.control.touched()).toBe(true);
+      expect(host.control.touched).toBe(true);
     });
   });
 
