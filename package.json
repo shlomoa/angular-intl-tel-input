@@ -26,7 +26,7 @@
     "ng": "ng",
     "build": "cmake --build build",
     "clean": "cmake -S . -B build && cmake --build build --target clean_all",
-    "dist_clean": "cmake -S . -B build && cmake --build build --target dist_clean",
+    "dist_clean": "cmake -S . -B build && cmake --build build --target dist_clean && cmake -E rm -rf build",
     "build:watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:integration": "node scripts/validate-integration.cjs"

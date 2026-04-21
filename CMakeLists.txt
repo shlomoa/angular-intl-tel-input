@@ -6,11 +6,18 @@ set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(GENERATED_DIR ${SRC_DIR}/generated)
 set(SCRIPTS_DIR ${CMAKE_SOURCE_DIR}/scripts)
 set(REPO_ROOT ${CMAKE_SOURCE_DIR})
+if(WIN32)
+  # Visual Studio emits custom commands as batch scripts; call keeps pnpm.cmd
+  # from swallowing the following postbuild commands.
+  set(PNPM_COMMAND cmd /c call pnpm.cmd)
+else()
+  set(PNPM_COMMAND pnpm)
+endif()
 
 # --- Install ---
 add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/node_modules/.pnpm/lock.yaml
-  COMMAND pnpm install
+  COMMAND ${CMAKE_COMMAND} -E env CI=true ${PNPM_COMMAND} install
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   DEPENDS ${CMAKE_SOURCE_DIR}/package.json
   COMMENT "Installing dependencies"
@@ -69,7 +76,7 @@ set(BUILD_MARKER ${CMAKE_SOURCE_DIR}/dist/.build-stamp)
 
 add_custom_command(
   OUTPUT ${BUILD_MARKER}
-  COMMAND pnpm ng build
+  COMMAND ${PNPM_COMMAND} ng build
   COMMAND node ${SCRIPTS_DIR}/postbuild-package.cjs
   COMMAND ${CMAKE_COMMAND} -E touch ${BUILD_MARKER}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -103,7 +110,6 @@ add_custom_target(dist_clean
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/.angular
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/out-tsc
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_SOURCE_DIR}/node_modules
-  COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_BINARY_DIR}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMENT "Restoring package to git checkout state"
 )

@@ -18,7 +18,7 @@ Run these commands from the package root. In a monorepo checkout, that directory
 | `pnpm run ng -- <args>` | `ng` | Angular CLI commands. |
 | `pnpm run build` | `cmake --build build` | Full CMake build after `cmake -S . -B build`. |
 | `pnpm run clean` | `cmake -S . -B build && cmake --build build --target clean_all` | Remove local build outputs and generated files. |
-| `pnpm run dist_clean` | `cmake -S . -B build && cmake --build build --target dist_clean` | Restore the package to a checkout-like state by removing build outputs, generated files, `node_modules/`, and `build/`. |
+| `pnpm run dist_clean` | `cmake -S . -B build && cmake --build build --target dist_clean && cmake -E rm -rf build` | Restore the package to a checkout-like state by removing build outputs, generated files, `node_modules/`, and `build/`. |
 | `pnpm run build:watch` | `ng build --watch --configuration development` | Rebuild the Angular library in watch mode. |
 | `pnpm run test` | `ng test` | Run unit tests. |
 | `pnpm run test:integration` | `node scripts/validate-integration.cjs` | Validate that a consumer Angular app can install and build against the generated package. |
@@ -42,7 +42,9 @@ cmake -S . -B build
 | `cmake --build build` | `pnpm ng build`, `node scripts/postbuild-package.cjs`, and `cmake -E touch dist/.build-stamp` | Run the default `build` target, including dependency install, source generation, Angular build, package post-processing, and build stamp creation. |
 | `cmake --build build --target build` | `pnpm ng build`, `node scripts/postbuild-package.cjs`, and `cmake -E touch dist/.build-stamp` | Run the explicit CMake `build` target. |
 | `cmake --build build --target clean_all` | `cmake -E rm -rf` for `dist/`, `src/generated/`, `.angular/`, and `out-tsc/` | Remove generated files and local build artifacts. |
-| `cmake --build build --target dist_clean` | `cmake -E rm -rf` for `dist/`, `src/generated/`, `.angular/`, `out-tsc/`, `node_modules/`, and `build/` | Remove all generated, dependency, and CMake build-directory state. |
+| `cmake --build build --target dist_clean` | `cmake -E rm -rf` for `dist/`, `src/generated/`, `.angular/`, `out-tsc/`, and `node_modules/` | Remove generated and dependency state while leaving the active CMake build directory in place. |
+
+`pnpm run dist_clean` removes `build/` after the CMake target finishes. Removing the active build directory from inside the generated Visual Studio/MSBuild target is unreliable on Windows.
 
 Generated files are written to `src/generated/` and excluded from version control. The distributable Angular package is output to `dist/`.
 
