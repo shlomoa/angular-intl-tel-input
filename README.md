@@ -9,50 +9,73 @@ Standalone Angular component for international telephone input, built from [intl
 - CMake >= 3.20
 - Git (for submodule init)
 
-## Install stage
+## Package commands
 
-```sh
-pnpm install
-```
+Run these commands from the package root. In a monorepo checkout, that directory is `packages/angular`.
 
-The package allows native build scripts for `sharp`, `esbuild`, and related dependencies via the `pnpm.onlyBuiltDependencies` setting in `package.json`.
+| Command | Runs | Use it for |
+| --- | --- | --- |
+| `pnpm run ng -- <args>` | `ng` | Angular CLI commands. |
+| `pnpm run build` | `cmake --build build` | Full CMake build after `cmake -S . -B build`. |
+| `pnpm run clean` | `cmake -S . -B build && cmake --build build --target clean_all` | Remove local build outputs and generated files. |
+| `pnpm run dist_clean` | `cmake -S . -B build && cmake --build build --target dist_clean` | Restore the package to a checkout-like state by removing build outputs, generated files, `node_modules/`, and `build/`. |
+| `pnpm run build:watch` | `ng build --watch --configuration development` | Rebuild the Angular library in watch mode. |
+| `pnpm run test` | `ng test` | Run unit tests. |
+| `pnpm run test:integration` | `node scripts/validate-integration.cjs` | Validate that a consumer Angular app can install and build against the generated package. |
 
-## Build stages
+`pnpm test` also runs the `test` script.
 
-### 1. Configure the build
+## CMake commands
+
+Configure the build directory before running CMake build targets:
 
 ```sh
 cmake -S . -B build
 ```
 
-### 2. Full package build
+| Command | Runs | Use it for |
+| --- | --- | --- |
+| `cmake --build build --target install_deps` | `pnpm install` | Install package dependencies. |
+| `cmake --build build --target submodules` | `node scripts/ensure-libphonenumber.js <repo-root>` | Ensure the vendored libphonenumber sources are available. |
+| `cmake --build build --target generate_sprites` | `node --experimental-strip-types scripts/generate-sprite.js` | Generate `src/generated/_metadata.scss` and `src/generated/flags.webp`. |
+| `cmake --build build --target generate_validation` | `node scripts/build-validation.js` | Compile `src/generated/validation.generated.ts` from libphonenumber. |
+| `cmake --build build` | `pnpm ng build`, `node scripts/postbuild-package.cjs`, and `cmake -E touch dist/.build-stamp` | Run the default `build` target, including dependency install, source generation, Angular build, package post-processing, and build stamp creation. |
+| `cmake --build build --target build` | `pnpm ng build`, `node scripts/postbuild-package.cjs`, and `cmake -E touch dist/.build-stamp` | Run the explicit CMake `build` target. |
+| `cmake --build build --target clean_all` | `cmake -E rm -rf` for `dist/`, `src/generated/`, `.angular/`, and `out-tsc/` | Remove generated files and local build artifacts. |
+| `cmake --build build --target dist_clean` | `cmake -E rm -rf` for `dist/`, `src/generated/`, `.angular/`, `out-tsc/`, `node_modules/`, and `build/` | Remove all generated, dependency, and CMake build-directory state. |
 
-CMake orchestrates the full build pipeline: dependency install, code generation (flag sprites + libphonenumber validation), and `ng build`.
+Generated files are written to `src/generated/` and excluded from version control. The distributable Angular package is output to `dist/`.
+
+## Common flows
+
+Install dependencies:
 
 ```sh
+pnpm install
+```
+
+Build the package:
+
+```sh
+cmake -S . -B build
+pnpm run build
+```
+
+Run the full build directly through CMake:
+
+```sh
+cmake -S . -B build
 cmake --build build
 ```
 
-### 3. Manual build stages
-
-If you want to run the stages individually, use:
+Run individual generation stages:
 
 ```sh
-# Generate flag sprites and _metadata.scss
-node --experimental-strip-types scripts/generate-sprite.js
-
-# Compile libphonenumber validation
-node scripts/build-validation.js
-
-# Build the Angular library
-pnpm ng build
+cmake --build build --target generate_sprites
+cmake --build build --target generate_validation
 ```
 
-Generated files are written to `src/generated/` and excluded from version control.
-
-The distributable Angular package is output to `dist/`.
-
-## Unit tests
+Run unit tests:
 
 ```sh
 pnpm test
@@ -60,7 +83,7 @@ pnpm test
 
 ## Validation stages
 
-### 2.1 Install validation
+### Install validation
 
 Validate that dependency installation succeeds:
 
@@ -68,7 +91,9 @@ Validate that dependency installation succeeds:
 pnpm install
 ```
 
-### 2.2 Build validation
+The package allows native build scripts for `sharp`, `esbuild`, and related dependencies via the `pnpm.onlyBuiltDependencies` setting in `package.json`.
+
+### Build validation
 
 Validate the standalone package build assumptions:
 
@@ -82,7 +107,7 @@ The build command for this stage is:
 cmake --build build
 ```
 
-### 2.3 Full standalone validation
+### Full standalone validation
 
 Validate the package in isolation by copying only:
 
@@ -100,7 +125,7 @@ node scripts/build-validation.js
 pnpm ng build
 ```
 
-### 2.4 Integration validation
+### Integration validation
 
 Validate that a consumer Angular app can install and build against the generated package:
 
