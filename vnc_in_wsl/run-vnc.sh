@@ -50,7 +50,7 @@ Options:
   --password VALUE            Set the VNC password from the provided value
   --skip-upgrade              Skip apt-get upgrade
   --skip-password             Do not set a VNC password
-  --timeout SECONDS           Per-command timeout, 1-10 seconds (default: 10)
+  --timeout SECONDS           Per-command timeout, 1-10 seconds; timed-out commands are terminated (default: 10)
   --wsl-conf-path PATH        Override /etc/wsl.conf path
   --vnc-dir PATH              Override the user's .vnc directory
   --service-dir PATH          Override the user systemd directory
@@ -116,9 +116,9 @@ run_target_bash() {
   shift 3
 
   if [[ "$(id -u)" -eq 0 && "$TARGET_USER" != "$(id -un)" ]]; then
-    run_command "$step_name" "$success_message" sudo -u "$TARGET_USER" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -lc "$script" bash "$@"
+    run_command "$step_name" "$success_message" sudo -u "$TARGET_USER" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -lc "$script" -- "$@"
   else
-    run_command "$step_name" "$success_message" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -lc "$script" bash "$@"
+    run_command "$step_name" "$success_message" env HOME="$TARGET_HOME" USER="$TARGET_USER" LOGNAME="$TARGET_USER" bash -lc "$script" -- "$@"
   fi
 }
 
@@ -193,7 +193,7 @@ write_file_if_changed() {
   step_result "$step_name" "Updated" "$path"
 }
 
-render_wsl_conf() {
+render_wsl_conf_to_file() {
   local temp_file="$1"
 
   if (( DRY_RUN )); then
@@ -243,7 +243,9 @@ PY
     return 0
   fi
 
-  run_command "Render WSL systemd configuration" "generated updated ${WSL_CONF_PATH} content" python3 - "$WSL_CONF_PATH" "$temp_file" <<'PY'
+  local rc=0
+  set +e
+  "$TIMEOUT_BIN" --foreground --kill-after=2s "${COMMAND_TIMEOUT}s" python3 - "$WSL_CONF_PATH" "$temp_file" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -286,12 +288,22 @@ if not found_boot:
 
 target_path.write_text("".join(output))
 PY
+  rc=$?
+  set -e
+
+  if (( rc == 124 )); then
+    fail "Configure /etc/wsl.conf" "timed out after ${COMMAND_TIMEOUT}s while preparing updated content"
+  fi
+
+  if (( rc != 0 )); then
+    fail "Configure /etc/wsl.conf" "failed to prepare updated content"
+  fi
 }
 
 configure_wsl_conf() {
   local temp_file
   temp_file="$(mktemp)"
-  render_wsl_conf "$temp_file"
+  render_wsl_conf_to_file "$temp_file"
   write_file_if_changed "Configure /etc/wsl.conf" "$WSL_CONF_PATH" "root:root" 0644 "$temp_file"
   rm -f "$temp_file"
 }
@@ -340,12 +352,20 @@ configure_password() {
   fi
 
   if [[ -n "$PASSWORD_VALUE" ]]; then
+    local temp_password_file
+    temp_password_file="$(mktemp)"
+    trap 'rm -f "$temp_password_file"' RETURN
+    chmod 600 "$temp_password_file"
+    printf '%s\n' "$PASSWORD_VALUE" >"$temp_password_file"
     run_target_bash "Configure VNC password" "stored VNC password in ${VNC_DIR}/passwd" '
       install -d -m 700 "$1"
       umask 077
-      printf "%s\n" "$2" | vncpasswd -f > "$1/passwd"
+      IFS= read -r password < "$2"
+      printf "%s\n" "$password" | vncpasswd -f > "$1/passwd"
       chmod 600 "$1/passwd"
-    ' "$VNC_DIR" "$PASSWORD_VALUE"
+    ' "$VNC_DIR" "$temp_password_file"
+    trap - RETURN
+    rm -f "$temp_password_file"
     return 0
   fi
 
@@ -353,7 +373,8 @@ configure_password() {
     run_target_bash "Configure VNC password" "stored VNC password in ${VNC_DIR}/passwd" '
       install -d -m 700 "$1"
       umask 077
-      head -n 1 "$2" | tr -d "\r\n" | vncpasswd -f > "$1/passwd"
+      IFS= read -r password < "$2"
+      printf "%s\n" "$password" | vncpasswd -f > "$1/passwd"
       chmod 600 "$1/passwd"
     ' "$VNC_DIR" "$PASSWORD_FILE"
     return 0
