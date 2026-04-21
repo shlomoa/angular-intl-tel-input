@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 project(angular-intl-tel-input NONE)
 
+get_filename_component(EXPECTED_BUILD_DIR "${CMAKE_SOURCE_DIR}/build" ABSOLUTE)
+get_filename_component(ACTUAL_BUILD_DIR "${CMAKE_BINARY_DIR}" ABSOLUTE)
+if(NOT ACTUAL_BUILD_DIR STREQUAL EXPECTED_BUILD_DIR)
+  message(FATAL_ERROR "You must build in the 'build' directory. Please run: cmake -S . -B build")
+endif()
+
 # Paths
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(GENERATED_DIR ${SRC_DIR}/generated)
