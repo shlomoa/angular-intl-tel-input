@@ -49,6 +49,16 @@ export class ExampleComponent {
 }
 ```
 
+`IntlTelInput` now integrates with Angular Signal Forms via `[formField]`.
+Legacy Angular forms bindings are not supported by this package version:
+
+- `[(ngModel)]`
+- `[formControl]`
+- `formControlName`
+
+If you are migrating from an older version, replace those bindings with a
+`SignalFormControl` and bind `phone.fieldTree` through `[formField]`.
+
 `IntlTelInputWithValidation` is also exported as a named export.
 
 ## Package output
