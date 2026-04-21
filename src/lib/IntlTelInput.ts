@@ -46,7 +46,9 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
   /** initialValue is only used during initialization — changes after init are ignored. */
   readonly initialValue = input<string | undefined>(undefined);
 
+  /** Signal Forms model binding for the current phone input value. */
   readonly value = model("");
+  /** Signal Forms touched binding, updated on blur. */
   readonly touched = model(false);
 
   readonly inputAttributes = input<Record<string, string>>({});
@@ -98,6 +100,7 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
   readonly click = output<MouseEvent>();
 
   private iti?: Iti;
+  // Effects are created after view init, so keep the component injector to scope cleanup correctly.
   private readonly injector = inject(Injector);
   private appliedInputAttrKeys = new Set<string>();
   private lastEmittedNumber?: string;
@@ -173,6 +176,7 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
   }
 
   handleInput() {
+    // Avoid echoing programmatic model writes back into the model/output pipeline.
     if (!this.iti || this.isApplyingModelValue) {
       return;
     }
