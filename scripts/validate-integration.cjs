@@ -221,7 +221,7 @@ writeFile(
 
 writeFile(
   'src/app/app.ts',
-  "import { Component, signal } from '@angular/core';\nimport { FormField } from '@angular/forms/signals';\nimport { SignalFormControl } from '@angular/forms/signals/compat';\nimport { IntlTelInput } from 'angular-intl-tel-input';\n\n@Component({\n  selector: 'app-root',\n  imports: [IntlTelInput, FormField],\n  template: `\n    <h1>{{ title() }}</h1>\n    <intl-tel-input [initialCountry]=\"'us'\" [formField]=\"phoneControl.fieldTree\" />\n    <p>Phone value: {{ phoneControl.value }}</p>\n  `,\n  styles: [],\n})\nexport class App {\n  protected readonly title = signal('angular-intl-tel-input integration test');\n  protected readonly phoneControl = new SignalFormControl('');\n}\n",
+  "import { Component, signal } from '@angular/core';\nimport { FormField } from '@angular/forms/signals';\nimport { SignalFormControl } from '@angular/forms/signals/compat';\nimport { IntlTelInput, IntlTelInputWithValidation } from 'angular-intl-tel-input';\n\n@Component({\n  selector: 'app-root',\n  imports: [IntlTelInput, IntlTelInputWithValidation, FormField],\n  template: `\n    <h1>{{ title() }}</h1>\n    <intl-tel-input [initialCountry]=\"'us'\" [formField]=\"phoneControl.fieldTree\" />\n    <p>Phone value: {{ phoneControl.value }}</p>\n    <intl-tel-input-with-validation [initialCountry]=\"'gb'\" [formField]=\"phoneControlWithValidation.fieldTree\" />\n    <p>Phone with validation value: {{ phoneControlWithValidation.value }}</p>\n  `,\n  styles: [],\n})\nexport class App {\n  protected readonly title = signal('angular-intl-tel-input integration test');\n  protected readonly phoneControl = new SignalFormControl('');\n  protected readonly phoneControlWithValidation = new SignalFormControl('');\n}\n",
 );
 
 writeFile(
