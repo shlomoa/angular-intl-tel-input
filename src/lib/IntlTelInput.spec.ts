@@ -1,31 +1,31 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { Component, ViewChild } from "@angular/core";
-import {
-  FormControl,
-  ReactiveFormsModule,
-  FormsModule,
-} from "@angular/forms";
+import { Component, ViewChild, signal } from "@angular/core";
+import { FormField, disabled } from "@angular/forms/signals";
+import { SignalFormControl } from "@angular/forms/signals/compat";
 import IntlTelInput from "./IntlTelInput";
 import type { AllOptions } from "../intl-tel-input/intl-tel-input";
 
 // Host component for testing
 @Component({
   standalone: true,
-  imports: [IntlTelInput, ReactiveFormsModule, FormsModule],
+  imports: [IntlTelInput, FormField],
   template: `<intl-tel-input
     #iti
     [initialCountry]="initialCountry"
-    [inputAttributes]="inputAttributes"
-    [formControl]="control"
+    [inputAttributes]="inputAttributes()"
+    [formField]="control.fieldTree"
     (blur)="blurCount = blurCount + 1"
     (focus)="focusCount = focusCount + 1"
   />`,
 })
 class TestHostComponent {
   @ViewChild("iti") iti!: IntlTelInput;
-  control = new FormControl("");
+  isDisabled = signal(false);
+  control = new SignalFormControl("", (path) => {
+    disabled(path, () => this.isDisabled());
+  });
   initialCountry: AllOptions["initialCountry"] = "us";
-  inputAttributes: Record<string, string> = {};
+  inputAttributes = signal<Record<string, string>>({});
   blurCount = 0;
   focusCount = 0;
 }
@@ -87,50 +87,32 @@ describe("IntlTelInput", () => {
     expect(host.iti.getInput().readOnly).toBe(false);
   });
 
-  it("should apply and remove inputAttributes", () => {
+  it("should apply and remove inputAttributes", async () => {
     const input = host.iti.getInput();
 
     // Apply attributes
     const attrs1 = { "aria-label": "Phone", maxlength: "20" };
-    host.iti.inputAttributes = attrs1;
-    host.iti.ngOnChanges({
-      inputAttributes: {
-        previousValue: {},
-        currentValue: attrs1,
-        firstChange: false,
-        isFirstChange: () => false,
-      },
-    });
+    host.inputAttributes.set(attrs1);
+    fixture.detectChanges();
+    await fixture.whenStable();
     expect(input.getAttribute("aria-label")).toBe("Phone");
     expect(input.getAttribute("maxlength")).toBe("20");
 
     // Remove maxlength by omitting it
     const attrs2 = { "aria-label": "Phone" };
-    host.iti.inputAttributes = attrs2;
-    host.iti.ngOnChanges({
-      inputAttributes: {
-        previousValue: attrs1,
-        currentValue: attrs2,
-        firstChange: false,
-        isFirstChange: () => false,
-      },
-    });
+    host.inputAttributes.set(attrs2);
+    fixture.detectChanges();
+    await fixture.whenStable();
     expect(input.getAttribute("aria-label")).toBe("Phone");
     expect(input.getAttribute("maxlength")).toBeNull();
   });
 
-  it("should ignore reserved inputAttributes", () => {
+  it("should ignore reserved inputAttributes", async () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const reserved = { type: "text", value: "x", disabled: "true" };
-    host.iti.inputAttributes = reserved;
-    host.iti.ngOnChanges({
-      inputAttributes: {
-        previousValue: {},
-        currentValue: reserved,
-        firstChange: false,
-        isFirstChange: () => false,
-      },
-    });
+    host.inputAttributes.set(reserved);
+    fixture.detectChanges();
+    await fixture.whenStable();
     expect(spy).toHaveBeenCalledTimes(3);
     spy.mockRestore();
   });
@@ -144,9 +126,11 @@ describe("IntlTelInput", () => {
     expect(host.blurCount).toBe(1);
   });
 
-  describe("ControlValueAccessor", () => {
-    it("should write value via FormControl", async () => {
+  describe("Signal Forms", () => {
+    it("should write value via SignalFormControl", async () => {
       host.control.setValue("+12025551234");
+      fixture.detectChanges();
+      await fixture.whenStable();
       await host.iti.getInstance()?.promise;
       fixture.detectChanges();
       // the number should be set on the input
@@ -154,14 +138,27 @@ describe("IntlTelInput", () => {
       expect(input.value).toContain("202");
     });
 
-    it("should set disabled via FormControl", () => {
-      host.control.disable();
+    it("should set disabled via SignalFormControl", async () => {
+      host.isDisabled.set(true);
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(host.iti.getInput().disabled).toBe(true);
 
-      host.control.enable();
+      host.isDisabled.set(false);
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(host.iti.getInput().disabled).toBe(false);
+    });
+
+    it("should mark the bound SignalFormControl as touched on blur", async () => {
+      expect(host.control.touched).toBe(false);
+
+      const input = host.iti.getInput();
+      input.dispatchEvent(new FocusEvent("blur"));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(host.control.touched).toBe(true);
     });
   });
 

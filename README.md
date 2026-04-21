@@ -32,6 +32,33 @@ Import the package stylesheet as well:
 @import "angular-intl-tel-input/styles";
 ```
 
+Use Angular Signal Forms to bind the control:
+
+```ts
+import { Component } from '@angular/core';
+import { FormField } from '@angular/forms/signals';
+import { SignalFormControl } from '@angular/forms/signals/compat';
+import { IntlTelInput } from 'angular-intl-tel-input';
+
+@Component({
+  imports: [IntlTelInput, FormField],
+  template: `<intl-tel-input [formField]="phone.fieldTree" />`,
+})
+export class ExampleComponent {
+  protected readonly phone = new SignalFormControl('');
+}
+```
+
+`IntlTelInput` now integrates with Angular Signal Forms via `[formField]`.
+Legacy Angular forms bindings are not supported by this package version:
+
+- `[(ngModel)]`
+- `[formControl]`
+- `formControlName`
+
+If you are migrating from an older version, replace those bindings with a
+`SignalFormControl` and bind `phone.fieldTree` through `[formField]`.
+
 `IntlTelInputWithValidation` is also exported as a named export.
 
 ## Package output

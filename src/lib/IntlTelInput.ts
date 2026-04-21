@@ -1,22 +1,19 @@
 import intlTelInput, { Iti } from "../intl-tel-input/intl-tel-input";
 import type { AllOptions, SomeOptions } from "../intl-tel-input/intl-tel-input";
 import {
-  Component,
-  Input,
-  OnDestroy,
-  ViewChild,
-  ElementRef,
-  Output,
-  EventEmitter,
-  forwardRef,
   AfterViewInit,
-  OnChanges,
-  SimpleChanges,
+  Component,
+  ElementRef,
+  Injector,
+  OnDestroy,
+  effect,
+  inject,
+  input,
+  model,
+  output,
+  viewChild,
 } from "@angular/core";
-import {
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
-} from "@angular/forms";
+import type { FormValueControl } from "@angular/forms/signals";
 
 export { intlTelInput };
 
@@ -33,7 +30,7 @@ const warnInputAttr = (prop: string): void => {
     <input
       type="tel"
       #inputRef
-      (input)="handleInput()"
+      (input)="onInput()"
       (blur)="handleBlur($event)"
       (focus)="handleFocus($event)"
       (keydown)="handleKeyDown($event)"
@@ -42,152 +39,135 @@ const warnInputAttr = (prop: string): void => {
       (click)="handleClick($event)"
     />
   `,
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IntlTelInput),
-      multi: true,
-    },
-  ],
 })
-class IntlTelInput
-  implements
-    AfterViewInit,
-    OnDestroy,
-    OnChanges,
-    ControlValueAccessor {
-  @ViewChild("inputRef", { static: true })
-  inputRef!: ElementRef<HTMLInputElement>;
+class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string> {
+  readonly inputRef = viewChild.required<ElementRef<HTMLInputElement>>("inputRef");
 
   /** initialValue is only used during initialization — changes after init are ignored. */
-  @Input() initialValue?: string;
+  readonly initialValue = input<string | undefined>(undefined);
 
-  @Input() inputAttributes: Record<string, string> = {};
-  @Input() disabled: boolean = false;
-  @Input() readonly: boolean = false;
+  /** Signal Forms model binding for the current phone input value. */
+  readonly value = model("");
+  /** Signal Forms touched binding, updated on blur. */
+  readonly touched = model(false);
 
-  // Plugin initialisation options (one @Input per option)
-  @Input() allowDropdown?: AllOptions["allowDropdown"];
-  @Input() allowedNumberTypes?: AllOptions["allowedNumberTypes"];
-  @Input() allowNumberExtensions?: AllOptions["allowNumberExtensions"];
-  @Input() allowPhonewords?: AllOptions["allowPhonewords"];
-  @Input() autoPlaceholder?: AllOptions["autoPlaceholder"];
-  @Input() containerClass?: AllOptions["containerClass"];
-  @Input() countryNameLocale?: AllOptions["countryNameLocale"];
-  @Input() countryOrder?: AllOptions["countryOrder"];
-  @Input() countrySearch?: AllOptions["countrySearch"];
-  @Input() customPlaceholder?: AllOptions["customPlaceholder"];
-  @Input() dropdownAlwaysOpen?: AllOptions["dropdownAlwaysOpen"];
-  @Input() dropdownContainer?: AllOptions["dropdownContainer"];
-  @Input() excludeCountries?: AllOptions["excludeCountries"];
-  @Input() fixDropdownWidth?: AllOptions["fixDropdownWidth"];
-  @Input() formatAsYouType?: AllOptions["formatAsYouType"];
-  @Input() formatOnDisplay?: AllOptions["formatOnDisplay"];
-  @Input() geoIpLookup?: AllOptions["geoIpLookup"];
-  @Input() hiddenInput?: AllOptions["hiddenInput"];
-  @Input() i18n?: AllOptions["i18n"];
-  @Input() initialCountry?: AllOptions["initialCountry"];
-  @Input() loadUtils?: AllOptions["loadUtils"];
-  @Input() nationalMode?: AllOptions["nationalMode"];
-  @Input() onlyCountries?: AllOptions["onlyCountries"];
-  @Input() placeholderNumberType?: AllOptions["placeholderNumberType"];
-  @Input() searchInputClass?: AllOptions["searchInputClass"];
-  @Input() separateDialCode?: AllOptions["separateDialCode"];
-  @Input() showFlags?: AllOptions["showFlags"];
-  @Input() strictMode?: AllOptions["strictMode"];
-  @Input() useFullscreenPopup?: AllOptions["useFullscreenPopup"];
+  readonly inputAttributes = input<Record<string, string>>({});
+  readonly disabled = input(false);
+  readonly readonly = input(false);
 
-  @Output() numberChange = new EventEmitter<string>();
-  @Output() countryChange = new EventEmitter<string>();
-  @Output() blur = new EventEmitter<FocusEvent>();
-  @Output() focus = new EventEmitter<FocusEvent>();
-  @Output() keydown = new EventEmitter<KeyboardEvent>();
-  @Output() keyup = new EventEmitter<KeyboardEvent>();
-  @Output() paste = new EventEmitter<ClipboardEvent>();
-  @Output() click = new EventEmitter<MouseEvent>();
+  // Plugin initialisation options (one input per option)
+  readonly allowDropdown = input<AllOptions["allowDropdown"] | undefined>(undefined);
+  readonly allowedNumberTypes = input<AllOptions["allowedNumberTypes"] | undefined>(undefined);
+  readonly allowNumberExtensions = input<AllOptions["allowNumberExtensions"] | undefined>(
+    undefined,
+  );
+  readonly allowPhonewords = input<AllOptions["allowPhonewords"] | undefined>(undefined);
+  readonly autoPlaceholder = input<AllOptions["autoPlaceholder"] | undefined>(undefined);
+  readonly containerClass = input<AllOptions["containerClass"] | undefined>(undefined);
+  readonly countryNameLocale = input<AllOptions["countryNameLocale"] | undefined>(undefined);
+  readonly countryOrder = input<AllOptions["countryOrder"] | undefined>(undefined);
+  readonly countrySearch = input<AllOptions["countrySearch"] | undefined>(undefined);
+  readonly customPlaceholder = input<AllOptions["customPlaceholder"] | undefined>(undefined);
+  readonly dropdownAlwaysOpen = input<AllOptions["dropdownAlwaysOpen"] | undefined>(undefined);
+  readonly dropdownContainer = input<AllOptions["dropdownContainer"] | undefined>(undefined);
+  readonly excludeCountries = input<AllOptions["excludeCountries"] | undefined>(undefined);
+  readonly fixDropdownWidth = input<AllOptions["fixDropdownWidth"] | undefined>(undefined);
+  readonly formatAsYouType = input<AllOptions["formatAsYouType"] | undefined>(undefined);
+  readonly formatOnDisplay = input<AllOptions["formatOnDisplay"] | undefined>(undefined);
+  readonly geoIpLookup = input<AllOptions["geoIpLookup"] | undefined>(undefined);
+  readonly hiddenInput = input<AllOptions["hiddenInput"] | undefined>(undefined);
+  readonly i18n = input<AllOptions["i18n"] | undefined>(undefined);
+  readonly initialCountry = input<AllOptions["initialCountry"] | undefined>(undefined);
+  readonly loadUtils = input<AllOptions["loadUtils"] | undefined>(undefined);
+  readonly nationalMode = input<AllOptions["nationalMode"] | undefined>(undefined);
+  readonly onlyCountries = input<AllOptions["onlyCountries"] | undefined>(undefined);
+  readonly placeholderNumberType = input<AllOptions["placeholderNumberType"] | undefined>(
+    undefined,
+  );
+  readonly searchInputClass = input<AllOptions["searchInputClass"] | undefined>(undefined);
+  readonly separateDialCode = input<AllOptions["separateDialCode"] | undefined>(undefined);
+  readonly showFlags = input<AllOptions["showFlags"] | undefined>(undefined);
+  readonly strictMode = input<AllOptions["strictMode"] | undefined>(undefined);
+  readonly useFullscreenPopup = input<AllOptions["useFullscreenPopup"] | undefined>(undefined);
+
+  readonly numberChange = output<string>();
+  readonly countryChange = output<string>();
+  readonly blur = output<FocusEvent>();
+  readonly focusEvent = output<FocusEvent>({ alias: "focus" });
+  readonly keydown = output<KeyboardEvent>();
+  readonly keyup = output<KeyboardEvent>();
+  readonly paste = output<ClipboardEvent>();
+  readonly click = output<MouseEvent>();
 
   private iti?: Iti;
+  // Effects are created after view init, so keep the component injector to scope cleanup correctly.
+  private readonly injector = inject(Injector);
   private appliedInputAttrKeys = new Set<string>();
-
   private lastEmittedNumber?: string;
   private lastEmittedCountry?: string;
-
-  // writeValue may be called by Angular forms before utils has loaded; queue it until then
-  private pendingWriteValue?: string;
-
+  private pendingModelSyncId = 0;
+  private isApplyingModelValue = false;
   private countryChangeHandler = () => this.handleInput();
-  // eslint-disable-next-line class-methods-use-this
-  private onChange: (value: string) => void = () => {};
-  // eslint-disable-next-line class-methods-use-this
-  private onTouched: () => void = () => {};
-
 
   ngAfterViewInit() {
-    this.iti = intlTelInput(
-      this.inputRef.nativeElement,
-      this.buildInitOptions(),
-    );
+    const inputElement = this.inputRef().nativeElement;
+    this.iti = intlTelInput(inputElement, this.buildInitOptions());
 
-    this.inputRef.nativeElement.addEventListener(
-      "countrychange",
-      this.countryChangeHandler,
-    );
+    inputElement.addEventListener("countrychange", this.countryChangeHandler);
 
-    this.applyInputAttrs();
+    effect(() => {
+      this.iti?.setDisabled(this.disabled());
+    }, { injector: this.injector });
 
-    if (this.disabled) {
-      this.iti.setDisabled(this.disabled);
+    effect(() => {
+      this.iti?.setReadonly(this.readonly());
+    }, { injector: this.injector });
+
+    effect(() => {
+      this.applyInputAttrs(this.inputAttributes());
+    }, { injector: this.injector });
+
+    effect(() => {
+      void this.syncValueToWidget(this.value());
+    }, { injector: this.injector });
+
+    const initialValue = this.initialValue();
+    if (initialValue && !this.value()) {
+      this.value.set(initialValue);
     }
-
-    if (this.readonly) {
-      this.iti.setReadonly(this.readonly);
-    }
-
-    // wait for utils to load before calling methods that require it (setNumber, etc.)
-    this.iti.promise.then(() => {
-      if (!this.iti?.isActive()) {
-        return;
-      }
-      if (this.pendingWriteValue !== undefined) {
-        this.iti.setNumber(this.pendingWriteValue);
-        this.pendingWriteValue = undefined;
-      } else if (this.initialValue) {
-        this.iti.setNumber(this.initialValue);
-      }
-    });
   }
 
   private buildInitOptions(): SomeOptions {
     const options: Partial<AllOptions> = {
-      allowDropdown: this.allowDropdown,
-      allowedNumberTypes: this.allowedNumberTypes,
-      allowNumberExtensions: this.allowNumberExtensions,
-      allowPhonewords: this.allowPhonewords,
-      autoPlaceholder: this.autoPlaceholder,
-      containerClass: this.containerClass,
-      countryNameLocale: this.countryNameLocale,
-      countryOrder: this.countryOrder,
-      countrySearch: this.countrySearch,
-      customPlaceholder: this.customPlaceholder,
-      dropdownAlwaysOpen: this.dropdownAlwaysOpen,
-      dropdownContainer: this.dropdownContainer,
-      excludeCountries: this.excludeCountries,
-      fixDropdownWidth: this.fixDropdownWidth,
-      formatAsYouType: this.formatAsYouType,
-      formatOnDisplay: this.formatOnDisplay,
-      geoIpLookup: this.geoIpLookup,
-      hiddenInput: this.hiddenInput,
-      i18n: this.i18n,
-      initialCountry: this.initialCountry,
-      loadUtils: this.loadUtils,
-      nationalMode: this.nationalMode,
-      onlyCountries: this.onlyCountries,
-      placeholderNumberType: this.placeholderNumberType,
-      searchInputClass: this.searchInputClass,
-      separateDialCode: this.separateDialCode,
-      showFlags: this.showFlags,
-      strictMode: this.strictMode,
-      useFullscreenPopup: this.useFullscreenPopup,
+      allowDropdown: this.allowDropdown(),
+      allowedNumberTypes: this.allowedNumberTypes(),
+      allowNumberExtensions: this.allowNumberExtensions(),
+      allowPhonewords: this.allowPhonewords(),
+      autoPlaceholder: this.autoPlaceholder(),
+      containerClass: this.containerClass(),
+      countryNameLocale: this.countryNameLocale(),
+      countryOrder: this.countryOrder(),
+      countrySearch: this.countrySearch(),
+      customPlaceholder: this.customPlaceholder(),
+      dropdownAlwaysOpen: this.dropdownAlwaysOpen(),
+      dropdownContainer: this.dropdownContainer(),
+      excludeCountries: this.excludeCountries(),
+      fixDropdownWidth: this.fixDropdownWidth(),
+      formatAsYouType: this.formatAsYouType(),
+      formatOnDisplay: this.formatOnDisplay(),
+      geoIpLookup: this.geoIpLookup(),
+      hiddenInput: this.hiddenInput(),
+      i18n: this.i18n(),
+      initialCountry: this.initialCountry(),
+      loadUtils: this.loadUtils(),
+      nationalMode: this.nationalMode(),
+      onlyCountries: this.onlyCountries(),
+      placeholderNumberType: this.placeholderNumberType(),
+      searchInputClass: this.searchInputClass(),
+      separateDialCode: this.separateDialCode(),
+      showFlags: this.showFlags(),
+      strictMode: this.strictMode(),
+      useFullscreenPopup: this.useFullscreenPopup(),
     };
 
     return Object.fromEntries(
@@ -195,47 +175,45 @@ class IntlTelInput
     ) as SomeOptions;
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes["disabled"]) {
-      this.iti?.setDisabled(this.disabled);
-    }
-
-    if (changes["readonly"]) {
-      this.iti?.setReadonly(this.readonly);
-    }
-
-    if (changes["inputAttributes"]) {
-      this.applyInputAttrs();
-    }
+  protected shouldProcessInputEvent(): boolean {
+    return Boolean(this.iti) && !this.isApplyingModelValue;
   }
 
-  handleInput() {
-    if (!this.iti) {
-      return;
+  onInput(): void {
+    this.handleInput();
+  }
+
+  handleInput(): boolean {
+    // Avoid echoing programmatic model writes back into the model/output pipeline.
+    if (!this.shouldProcessInputEvent()) {
+      return false;
     }
 
-    const inputVal = this.inputRef.nativeElement.value;
-    const countryIso = this.iti.getSelectedCountryData()?.iso2 ?? "";
+    const iti = this.iti!;
+    const inputVal = this.inputRef().nativeElement.value;
+    const countryIso = iti.getSelectedCountryData()?.iso2 ?? "";
 
     if (inputVal !== this.lastEmittedNumber) {
       this.lastEmittedNumber = inputVal;
+      this.value.set(inputVal);
       this.numberChange.emit(inputVal);
-      this.onChange(inputVal);
     }
 
     if (countryIso !== this.lastEmittedCountry) {
       this.lastEmittedCountry = countryIso;
       this.countryChange.emit(countryIso);
     }
+
+    return true;
   }
 
   handleBlur(event: FocusEvent) {
-    this.onTouched();
+    this.touched.set(true);
     this.blur.emit(event);
   }
 
   handleFocus(event: FocusEvent) {
-    this.focus.emit(event);
+    this.focusEvent.emit(event);
   }
 
   handleKeyDown(event: KeyboardEvent) {
@@ -267,16 +245,13 @@ class IntlTelInput
    * not in `ngOnInit` or the `constructor`, as the component needs to be fully initialized.
    */
   getInput(): HTMLInputElement {
-    return this.inputRef.nativeElement;
+    return this.inputRef().nativeElement;
   }
 
   ngOnDestroy() {
     this.iti?.destroy();
 
-    this.inputRef.nativeElement.removeEventListener(
-      "countrychange",
-      this.countryChangeHandler,
-    );
+    this.inputRef().nativeElement.removeEventListener("countrychange", this.countryChangeHandler);
   }
 
   private ignoredInputAttrs = new Set([
@@ -286,54 +261,48 @@ class IntlTelInput
     "readonly",
   ]);
 
-  private applyInputAttrs(): void {
+  private applyInputAttrs(inputAttributes: Record<string, string>): void {
     const currentKeys = new Set<string>();
-    Object.entries(this.inputAttributes).forEach(([key, value]) => {
+    Object.entries(inputAttributes).forEach(([key, value]) => {
       if (this.ignoredInputAttrs.has(key)) {
         warnInputAttr(key);
       } else {
         currentKeys.add(key);
-        this.inputRef.nativeElement.setAttribute(key, value);
+        this.inputRef().nativeElement.setAttribute(key, value);
       }
     });
     this.appliedInputAttrKeys.forEach((key) => {
       if (!currentKeys.has(key)) {
-        this.inputRef.nativeElement.removeAttribute(key);
+        this.inputRef().nativeElement.removeAttribute(key);
       }
     });
     this.appliedInputAttrKeys = currentKeys;
   }
 
-  // ============ ControlValueAccessor Implementation ============
+  private async syncValueToWidget(value: string): Promise<void> {
+    const iti = this.iti;
+    if (!iti) {
+      return;
+    }
 
-  writeValue(value: string | null): void {
-    const next = value || "";
-    if (this.iti) {
-      // wait for utils to load before calling setNumber
-      this.iti.promise.then(() => {
-        if (this.iti?.isActive()) {
-          this.iti.setNumber(next);
-        }
-      });
-    } else {
-      // iti not yet created (writeValue called before ngAfterViewInit) - queue for later
-      this.pendingWriteValue = next;
+    const syncId = ++this.pendingModelSyncId;
+    await iti.promise;
+
+    if (!this.iti?.isActive() || syncId !== this.pendingModelSyncId) {
+      return;
+    }
+
+    const inputElement = this.inputRef().nativeElement;
+    if (inputElement.value === value) {
+      return;
+    }
+
+    this.isApplyingModelValue = true;
+    try {
+      iti.setNumber(value);
+    } finally {
+      this.isApplyingModelValue = false;
     }
   }
-
-  registerOnChange(fn: any): void {
-    this.onChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this.onTouched = fn;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-    this.iti?.setDisabled(isDisabled);
-  }
-
-
 }
 export default IntlTelInput;
