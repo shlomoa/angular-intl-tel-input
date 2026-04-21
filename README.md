@@ -33,8 +33,15 @@ Configure the build directory before running CMake build targets:
 cmake -S . -B build
 ```
 
+Or the equivalent npm script:
+
+```sh
+pnpm run cmake:init
+```
+
 | Command | Runs | Use it for |
 | --- | --- | --- |
+| `pnpm run cmake:init` | `cmake -S . -B build` | Initialize the CMake build directory. |
 | `cmake --build build --target install_deps` | `pnpm install` | Install package dependencies. |
 | `cmake --build build --target submodules` | `node scripts/ensure-libphonenumber.js <repo-root>` | Ensure the vendored libphonenumber sources are available. |
 | `cmake --build build --target generate_sprites` | `node --experimental-strip-types scripts/generate-sprite.js` | Generate `src/generated/_metadata.scss` and `src/generated/flags.webp`. |

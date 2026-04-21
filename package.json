@@ -24,6 +24,7 @@
   ],
   "scripts": {
     "ng": "ng",
+    "cmake:init": "cmake -S . -B build",
     "build": "cmake --build build",
     "clean": "cmake -S . -B build && cmake --build build --target clean_all",
     "dist_clean": "cmake -S . -B build && cmake --build build --target dist_clean && cmake -E rm -rf build",
