@@ -94,6 +94,7 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
   readonly countryChange = output<string>();
   readonly blur = output<FocusEvent>();
   readonly focusEvent = output<FocusEvent>({ alias: "focus" });
+  readonly focus = this.focusEvent;
   readonly keydown = output<KeyboardEvent>();
   readonly keyup = output<KeyboardEvent>();
   readonly paste = output<ClipboardEvent>();
