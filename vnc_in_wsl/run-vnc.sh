@@ -50,7 +50,7 @@ Options:
   --password VALUE            Set the VNC password from the provided value
   --skip-upgrade              Skip apt-get upgrade
   --skip-password             Do not set a VNC password
-  --timeout SECONDS           Per-command timeout, 1-10 seconds to match the issue requirement; timed-out commands are terminated (default: 10)
+  --timeout SECONDS           Per-command timeout, 1-10 seconds; timed-out commands are terminated (default: 10)
   --wsl-conf-path PATH        Override /etc/wsl.conf path
   --vnc-dir PATH              Override the user's .vnc directory
   --service-dir PATH          Override the user systemd directory
