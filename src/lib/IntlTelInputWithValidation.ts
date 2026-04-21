@@ -25,7 +25,7 @@ export { intlTelInput };
     <input
       type="tel"
       #inputRef
-      (input)="handleInput()"
+      (input)="onInput()"
       (blur)="handleBlur($event)"
       (focus)="handleFocus($event)"
       (keydown)="handleKeyDown($event)"

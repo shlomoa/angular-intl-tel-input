@@ -30,7 +30,7 @@ const warnInputAttr = (prop: string): void => {
     <input
       type="tel"
       #inputRef
-      (input)="handleInput()"
+      (input)="onInput()"
       (blur)="handleBlur($event)"
       (focus)="handleFocus($event)"
       (keydown)="handleKeyDown($event)"
@@ -178,6 +178,10 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
 
   protected shouldProcessInputEvent(): boolean {
     return Boolean(this.iti) && !this.isApplyingModelValue;
+  }
+
+  onInput(): void {
+    this.handleInput();
   }
 
   handleInput(): boolean {
