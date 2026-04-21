@@ -133,7 +133,7 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
 
     const initialValue = this.initialValue();
     if (initialValue && !this.value()) {
-      void this.syncValueToWidget(initialValue);
+      this.value.set(initialValue);
     }
   }
 
