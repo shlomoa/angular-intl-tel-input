@@ -115,4 +115,27 @@ describe("IntlTelInputWithValidation", () => {
     expect(host.iti.validate({} as AbstractControl)).toBeNull();
     expect(preciseSpy).toHaveBeenCalled();
   });
+
+  it("should ignore validation side effects during programmatic model sync", async () => {
+    const iti = host.iti.getInstance()!;
+    const validatorChange = vi.fn();
+    host.iti.registerOnValidatorChange(validatorChange);
+
+    const looseSpy = vi.spyOn(iti, "isValidNumber");
+    const preciseSpy = vi.spyOn(iti, "isValidNumberPrecise");
+    const errorSpy = vi.spyOn(iti, "getValidationError");
+
+    host.iti.value.set("+12025550123");
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await iti.promise;
+    fixture.detectChanges();
+
+    expect(host.validityChanges).toEqual([]);
+    expect(host.errorCodeChanges).toEqual([]);
+    expect(validatorChange).not.toHaveBeenCalled();
+    expect(looseSpy).not.toHaveBeenCalled();
+    expect(preciseSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
 });

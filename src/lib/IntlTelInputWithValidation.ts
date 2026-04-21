@@ -52,12 +52,14 @@ class IntlTelInputWithValidation extends IntlTelInput implements Validator {
   // eslint-disable-next-line class-methods-use-this
   private onValidatorChange: () => void = () => {};
 
-  override handleInput() {
-    super.handleInput();
+  override handleInput(): boolean {
+    if (!super.handleInput()) {
+      return false;
+    }
 
     const iti = this.getInstance();
     if (!iti) {
-      return;
+      return false;
     }
 
     const isValid =
@@ -83,6 +85,8 @@ class IntlTelInputWithValidation extends IntlTelInput implements Validator {
     if (hasChanged) {
       this.onValidatorChange();
     }
+
+    return true;
   }
 
   validate(_control: AbstractControl): ValidationErrors | null {

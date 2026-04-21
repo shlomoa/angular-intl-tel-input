@@ -175,14 +175,19 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
     ) as SomeOptions;
   }
 
-  handleInput() {
+  protected shouldProcessInputEvent(): boolean {
+    return Boolean(this.iti) && !this.isApplyingModelValue;
+  }
+
+  handleInput(): boolean {
     // Avoid echoing programmatic model writes back into the model/output pipeline.
-    if (!this.iti || this.isApplyingModelValue) {
-      return;
+    if (!this.shouldProcessInputEvent()) {
+      return false;
     }
 
+    const iti = this.iti!;
     const inputVal = this.inputRef().nativeElement.value;
-    const countryIso = this.iti.getSelectedCountryData()?.iso2 ?? "";
+    const countryIso = iti.getSelectedCountryData()?.iso2 ?? "";
 
     if (inputVal !== this.lastEmittedNumber) {
       this.lastEmittedNumber = inputVal;
@@ -194,6 +199,8 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
       this.lastEmittedCountry = countryIso;
       this.countryChange.emit(countryIso);
     }
+
+    return true;
   }
 
   handleBlur(event: FocusEvent) {
