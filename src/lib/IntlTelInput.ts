@@ -48,8 +48,10 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
 
   /** Signal Forms model binding for the current phone input value. */
   readonly value = model("");
-  /** Signal Forms touched binding, updated on blur. */
-  readonly touched = model(false);
+  /** Signal Forms touched status received from the bound field. */
+  readonly touched = input(false);
+  /** Signal Forms output emitted on blur to mark the bound field as touched. */
+  readonly touch = output<void>();
 
   readonly inputAttributes = input<Record<string, string>>({});
   readonly disabled = input(false);
@@ -208,7 +210,7 @@ class IntlTelInput implements AfterViewInit, OnDestroy, FormValueControl<string>
   }
 
   handleBlur(event: FocusEvent) {
-    this.touched.set(true);
+    this.touch.emit();
     this.blur.emit(event);
   }
 
